@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+mobile/node_modules/
+
+# Expo and builds
+.expo/
+mobile/.expo/
+dist/
+mobile/dist/
+web-build/
+mobile/web-build/
+expo-env.d.ts
+mobile/expo-env.d.ts
+
+# Native/generated folders
+ios/
+android/
+mobile/ios/
+mobile/android/
+.kotlin/
+mobile/.kotlin/
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.tsbuildinfo
+.metro-health-check*
+mobile/.metro-health-check*
+
+# OS/editor
+.DS_Store
+Thumbs.db
