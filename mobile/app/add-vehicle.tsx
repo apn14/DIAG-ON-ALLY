@@ -6,14 +6,13 @@ import { Button, HelperText, Text, TextInput } from 'react-native-paper';
 import { DropdownField } from '../components/DropdownField';
 import { COLORS } from '../constants/colors';
 import {
-  FUEL_TYPES,
   MILEAGE_OPTIONS,
-  VEHICLE_ENGINES,
   VEHICLE_MAKES,
-  VEHICLE_MODEL_OPTIONS,
-  VEHICLE_TRANSMISSIONS,
-  VEHICLE_TRIMS,
-  VEHICLE_YEARS,
+  getModelsForMake,
+  getPowertrainFromLabel,
+  getPowertrainOptionsForSelection,
+  getTrimsForSelection,
+  getYearsForSelection,
 } from '../constants/vehicleOptions';
 import { saveVehicle } from '../lib/storage';
 
@@ -22,6 +21,7 @@ type FormState = {
   model: string;
   year: string;
   trim: string;
+  powertrain: string;
   engine: string;
   transmission: string;
   mileage: string;
@@ -35,6 +35,7 @@ const initialForm: FormState = {
   model: '',
   year: '',
   trim: '',
+  powertrain: '',
   engine: '',
   transmission: '',
   mileage: '',
@@ -49,12 +50,80 @@ export default function AddVehicleScreen() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const modelOptions = getModelsForMake(form.make);
+  const yearOptions = getYearsForSelection(form.make, form.model);
+  const trimOptions = getTrimsForSelection(form.make, form.model, form.year);
+  const powertrainOptions = getPowertrainOptionsForSelection(form.make, form.model, form.year, form.trim);
+
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
 
   function updateMake(make: string) {
-    setForm((current) => ({ ...current, make, model: '' }));
+    setError('');
+    setForm((current) => ({
+      ...current,
+      make,
+      model: '',
+      year: '',
+      trim: '',
+      powertrain: '',
+      engine: '',
+      transmission: '',
+      fuelType: '',
+    }));
+  }
+
+  function updateModel(model: string) {
+    setError('');
+    setForm((current) => ({
+      ...current,
+      model,
+      year: '',
+      trim: '',
+      powertrain: '',
+      engine: '',
+      transmission: '',
+      fuelType: '',
+    }));
+  }
+
+  function updateYear(year: string) {
+    setError('');
+    setForm((current) => ({
+      ...current,
+      year,
+      trim: '',
+      powertrain: '',
+      engine: '',
+      transmission: '',
+      fuelType: '',
+    }));
+  }
+
+  function updateTrim(trim: string) {
+    setError('');
+    setForm((current) => ({
+      ...current,
+      trim,
+      powertrain: '',
+      engine: '',
+      transmission: '',
+      fuelType: '',
+    }));
+  }
+
+  function updatePowertrain(powertrainLabel: string) {
+    setError('');
+    const powertrain = getPowertrainFromLabel(form.make, form.model, form.year, form.trim, powertrainLabel);
+
+    setForm((current) => ({
+      ...current,
+      powertrain: powertrainLabel,
+      engine: powertrain?.engine ?? '',
+      transmission: powertrain?.transmission ?? '',
+      fuelType: powertrain?.fuelType ?? '',
+    }));
   }
 
   function validate() {
@@ -106,16 +175,53 @@ export default function AddVehicleScreen() {
       <Text variant="titleLarge" style={styles.title}>
         Vehicle Profile
       </Text>
-      <Text style={styles.subtitle}>Add enough detail for more useful diagnostic context.</Text>
+      <Text style={styles.subtitle}>Pick a make first, then the available models, years, trims, and powertrains will narrow automatically.</Text>
 
       <DropdownField label="Make" value={form.make} options={VEHICLE_MAKES} onChange={updateMake} />
-      <DropdownField label="Model" value={form.model} options={VEHICLE_MODEL_OPTIONS[form.make] ?? ['Other']} onChange={(value) => updateField('model', value)} />
-      <DropdownField label="Year" value={form.year} options={VEHICLE_YEARS} onChange={(value) => updateField('year', value)} />
-      <DropdownField label="Trim" value={form.trim} options={VEHICLE_TRIMS} onChange={(value) => updateField('trim', value)} />
-      <DropdownField label="Engine" value={form.engine} options={VEHICLE_ENGINES} onChange={(value) => updateField('engine', value)} />
-      <DropdownField label="Transmission" value={form.transmission} options={VEHICLE_TRANSMISSIONS} onChange={(value) => updateField('transmission', value)} />
+      <DropdownField label="Model" value={form.model} options={modelOptions} onChange={updateModel} disabled={!form.make} />
+      <DropdownField label="Year" value={form.year} options={yearOptions} onChange={updateYear} disabled={!form.model} />
+      <DropdownField label="Trim" value={form.trim} options={trimOptions} onChange={updateTrim} disabled={!form.year} />
+      <DropdownField
+        label="Engine / Transmission"
+        value={form.powertrain}
+        options={powertrainOptions}
+        onChange={updatePowertrain}
+        disabled={!form.year}
+      />
+
+      <HelperText type="info" visible={!!form.powertrain}>
+        Engine, transmission, and fuel type are auto-filled from the selected powertrain.
+      </HelperText>
+
+      <TextInput
+        label="Engine"
+        value={form.engine}
+        editable={false}
+        style={styles.input}
+        textColor={COLORS.mainText}
+        placeholder="Auto-filled after choosing engine / transmission"
+        placeholderTextColor={COLORS.mutedText}
+      />
+      <TextInput
+        label="Transmission"
+        value={form.transmission}
+        editable={false}
+        style={styles.input}
+        textColor={COLORS.mainText}
+        placeholder="Auto-filled after choosing engine / transmission"
+        placeholderTextColor={COLORS.mutedText}
+      />
+      <TextInput
+        label="Fuel Type"
+        value={form.fuelType}
+        editable={false}
+        style={styles.input}
+        textColor={COLORS.mainText}
+        placeholder="Auto-filled after choosing engine / transmission"
+        placeholderTextColor={COLORS.mutedText}
+      />
+
       <DropdownField label="Mileage" value={form.mileage} options={MILEAGE_OPTIONS} onChange={(value) => updateField('mileage', value)} />
-      <DropdownField label="Fuel Type" value={form.fuelType} options={FUEL_TYPES} onChange={(value) => updateField('fuelType', value)} />
       <TextInput
         label="Modifications"
         value={form.modifications}

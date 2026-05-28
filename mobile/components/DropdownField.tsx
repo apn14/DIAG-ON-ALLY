@@ -9,31 +9,40 @@ type Props = {
   options: string[];
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 };
 
-export function DropdownField({ label, options, value, onChange }: Props) {
+export function DropdownField({ label, options, value, onChange, disabled = false }: Props) {
   const [visible, setVisible] = useState(false);
+  const isDisabled = disabled || options.length === 0;
 
   function handleSelect(option: string) {
     onChange(option);
     setVisible(false);
   }
 
+  function openMenu() {
+    if (!isDisabled) {
+      setVisible(true);
+    }
+  }
+
   return (
     <Menu
-      visible={visible}
+      visible={visible && !isDisabled}
       onDismiss={() => setVisible(false)}
       contentStyle={styles.menu}
       anchor={
-        <Pressable onPress={() => setVisible(true)}>
+        <Pressable disabled={isDisabled} onPress={openMenu}>
           <TextInput
             label={label}
             value={value}
+            disabled={isDisabled}
             editable={false}
             pointerEvents="none"
-            style={styles.input}
+            style={[styles.input, isDisabled && styles.disabledInput]}
             textColor={COLORS.mainText}
-            right={<TextInput.Icon icon="menu-down" color={COLORS.secondaryText} />}
+            right={<TextInput.Icon icon="menu-down" color={isDisabled ? COLORS.mutedText : COLORS.secondaryText} />}
           />
         </Pressable>
       }
@@ -49,6 +58,9 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: COLORS.elevated,
     marginBottom: 12,
+  },
+  disabledInput: {
+    opacity: 0.72,
   },
   menu: {
     backgroundColor: COLORS.elevated,
